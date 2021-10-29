@@ -1,7 +1,7 @@
-#include <filesystem>
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <math.h>
 #include "listener.h"
 #include "buffer.h"
 #include "shader.h"
@@ -19,7 +19,7 @@ float vertices1[] = {
     0.25f, 0.5f, 0.0f
 };
 
-int main(int argc, char **argv) {
+int main([[maybe_unused]] int argc, char **argv) {
     setProcName(argv[0]);
 
     // initialize glfw
@@ -64,15 +64,34 @@ int main(int argc, char **argv) {
     glEnableVertexAttribArray(0);
     vao1.unbind();
 
-    auto shader0 = ShaderProgram();
-    shader0.createShader(GL_VERTEX_SHADER, "main.vert");
-    shader0.createShader(GL_FRAGMENT_SHADER, "orange.frag");
-    shader0.link();
+    auto mainVert = new Shader(GL_VERTEX_SHADER, "main.vert");
 
-    auto shader1 = ShaderProgram();
-    shader1.createShader(GL_VERTEX_SHADER, "main.vert");
-    shader1.createShader(GL_FRAGMENT_SHADER, "yellow.frag");
-    shader1.link();
+    auto orangeShader = ShaderProgram();
+    {
+        auto orangeFrag = Shader(GL_FRAGMENT_SHADER, "orange.frag");
+        orangeShader.attach(*mainVert);
+        orangeShader.attach(orangeFrag);
+        orangeShader.link();
+    }
+
+    auto vertexColorShader = ShaderProgram();
+    {
+        auto colorVert = Shader(GL_VERTEX_SHADER, "color.vert");
+        auto colorFrag = Shader(GL_FRAGMENT_SHADER, "color.frag");
+        vertexColorShader.attach(colorVert);
+        vertexColorShader.attach(colorFrag);
+        vertexColorShader.link();
+    }
+
+    auto uniformShader = ShaderProgram();
+    {
+        auto uniformFrag = Shader(GL_FRAGMENT_SHADER, "uniform.frag");
+        uniformShader.attach(*mainVert);
+        uniformShader.attach(uniformFrag);
+        uniformShader.link();
+    }
+
+    delete mainVert;
 
     while (!glfwWindowShouldClose(window)) {
         onInput(window);
@@ -82,11 +101,14 @@ int main(int argc, char **argv) {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        shader0.use();
+        orangeShader.use();
         vao0.bind();
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        shader1.use();
+        auto time = (float) glfwGetTime();
+        float green = (sin(time) / 2.0f) + 0.5f;
+        uniformShader.use();
+        uniformShader.uniform4f("ourColor", 0.0f, green, 0.0f, 1.0f);
         vao1.bind();
         glDrawArrays(GL_TRIANGLES, 0, 3);
 

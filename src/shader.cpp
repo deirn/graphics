@@ -1,3 +1,4 @@
+#include "config.h"
 #include "shader.h"
 #include <glad/glad.h>
 #include <iostream>
@@ -5,22 +6,23 @@
 #include <algorithm>
 #include "paths.h"
 
-class ShaderImpl : public Shader {
-public:
-    ShaderImpl(int type, const char *source) :
-        Shader(type, source) {};
-};
-
-Shader::Shader(int type, const char *source) :
+Shader::Shader(int type, const char *fileName) :
+    type(type),
     id(glCreateShader(type)) {
-    glShaderSource(id, 1, &source, nullptr);
-}
+#if CONFIG_DEBUG_SHADER
+    std::cout << "[DEBUG::SHADER::CREATED] " << id << std::endl;
+#endif
 
-bool Shader::compile() {
-    if (compiled) {
-        std::cout << "ERROR::SHADER::ALREADY_COMPILED\n";
-        return true;
-    }
+    std::string path = "shader/";
+    path += fileName;
+
+    std::ifstream sourceFile(getResourcePath(path.c_str()));
+    std::string source((std::istreambuf_iterator<char>(sourceFile)), std::istreambuf_iterator<char>());
+
+    const char *cSource = source.c_str();
+    glShaderSource(id, 1, &cSource, nullptr);
+
+    sourceFile.close();
 
     glCompileShader(id);
 
@@ -30,44 +32,34 @@ bool Shader::compile() {
         char infoLog[512];
         glGetShaderInfoLog(id, 512, nullptr, infoLog);
         std::cout << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
-        return false;
     }
+}
 
-    compiled = true;
-    return true;
+Shader::~Shader() {
+    glDeleteShader(id);
+
+#if CONFIG_DEBUG_SHADER
+    std::cout << "[DEBUG::SHADER::DELETED] " << id << std::endl;
+#endif
+}
+
+unsigned int Shader::getId() const {
+    return id;
 }
 
 ShaderProgram::ShaderProgram() :
-    id(glCreateProgram()) {}
-
-Shader ShaderProgram::createShader(int type, const char *fileName) {
-    std::string path = "shader/";
-    path += fileName;
-
-    std::ifstream sourceFile(getResourcePath(path.c_str()));
-    std::string source((std::istreambuf_iterator<char>(sourceFile)), std::istreambuf_iterator<char>());
-
-    auto shader = ShaderImpl(type, source.c_str());
-    shaders.insert({type, shader});
-
-    sourceFile.close();
-    return shader;
+    id(glCreateProgram()) {
 }
 
-Shader ShaderProgram::getShader(int type) {
-    return shaders.at(type);
+unsigned int ShaderProgram::getId() const {
+    return id;
 }
 
-bool ShaderProgram::link() {
-    for (const auto &pair: shaders) {
-        auto shader = pair.second;
-        if (!shader.compile()) {
-            return false;
-        }
+void ShaderProgram::attach(Shader &shader) const {
+    glAttachShader(id, shader.getId());
+}
 
-        glAttachShader(id, shader.id);
-    }
-
+bool ShaderProgram::link() const {
     int success;
     glLinkProgram(id);
     glGetProgramiv(id, GL_LINK_STATUS, &success);
@@ -78,13 +70,14 @@ bool ShaderProgram::link() {
         return false;
     }
 
-    for (const auto &pair: shaders) {
-        glDeleteShader(pair.second.id);
-    }
-
     return true;
 }
 
 void ShaderProgram::use() const {
     glUseProgram(id);
+}
+
+void ShaderProgram::uniform4f(const char *name, float v0, float v1, float v2, float v3) const {
+    int location = glGetUniformLocation(id, name);
+    glUniform4f(location, v0, v1, v2, v3);
 }

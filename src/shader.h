@@ -4,30 +4,33 @@
 
 class Shader {
 public:
-    unsigned int id;
-
-    bool compile();
-
-protected:
-    Shader(int type, const char *source);
+    const int type;
 
 private:
-    bool compiled = false;
+    unsigned int id;
+
+public:
+    Shader(int type, const char *fileName);
+
+    ~Shader();
+
+    unsigned int getId() const;
 };
 
 class ShaderProgram {
+private:
+    unsigned int id;
+
 public:
     ShaderProgram();
 
-    Shader createShader(int type, const char *fileName);
+    unsigned int getId() const;
 
-    Shader getShader(int type);
+    void attach(Shader &shader) const;
 
-    bool link();
+    bool link() const;
 
     void use() const;
 
-private:
-    unsigned int id;
-    std::unordered_map<int, Shader> shaders = {};
+    void uniform4f(const char *name, float v0, float v1, float v2, float v3) const;
 };

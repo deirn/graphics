@@ -1,5 +1,7 @@
-add_subdirectory(glad EXCLUDE_FROM_ALL)
-target_link_libraries(main PRIVATE glad)
+function(lib name)
+    add_subdirectory(${name} EXCLUDE_FROM_ALL)
+    target_link_libraries(main PRIVATE ${name})
+endfunction()
 
-add_subdirectory(glfw EXCLUDE_FROM_ALL)
-target_link_libraries(main PRIVATE glfw)
+lib(glad)
+lib(glfw)

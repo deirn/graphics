@@ -1,27 +1,11 @@
+#include <filesystem>
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "listener.h"
 #include "buffer.h"
 #include "shader.h"
-
-const char *vertexShaderSource = "#version 330 core\n"
-                                 "layout (location = 0) in vec3 aPos;\n"
-                                 "void main() {\n"
-                                 "    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0f);\n"
-                                 "}";
-
-const char *fragmentShaderSource0 = "#version 330 core\n"
-                                    "out vec4 FragColor;\n"
-                                    "void main() {\n"
-                                    "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-                                    "}";
-
-const char *fragmentShaderSource1 = "#version 330 core\n"
-                                    "out vec4 FragColor;\n"
-                                    "void main() {\n"
-                                    "    FragColor = vec4(1.0f, 1.0f, 0.2f, 1.0f);\n"
-                                    "}";
+#include "paths.h"
 
 float vertices0[] = {
     -0.5f, -0.5f, 0.0f,
@@ -35,7 +19,9 @@ float vertices1[] = {
     0.25f, 0.5f, 0.0f
 };
 
-int main() {
+int main(int argc, char **argv) {
+    setProcName(argv[0]);
+
     // initialize glfw
     glfwInit();
 
@@ -79,13 +65,13 @@ int main() {
     vao1.unbind();
 
     auto shader0 = ShaderProgram();
-    shader0.createShader(GL_VERTEX_SHADER, vertexShaderSource);
-    shader0.createShader(GL_FRAGMENT_SHADER, fragmentShaderSource0);
+    shader0.createShader(GL_VERTEX_SHADER, "main.vert");
+    shader0.createShader(GL_FRAGMENT_SHADER, "orange.frag");
     shader0.link();
 
     auto shader1 = ShaderProgram();
-    shader1.createShader(GL_VERTEX_SHADER, vertexShaderSource);
-    shader1.createShader(GL_FRAGMENT_SHADER, fragmentShaderSource1);
+    shader1.createShader(GL_VERTEX_SHADER, "main.vert");
+    shader1.createShader(GL_FRAGMENT_SHADER, "yellow.frag");
     shader1.link();
 
     while (!glfwWindowShouldClose(window)) {

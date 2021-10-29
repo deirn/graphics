@@ -1,9 +1,12 @@
+#pragma once
+
 #include <unordered_map>
 
 class Shader {
 public:
     unsigned int id;
-    bool compile(unsigned int progId);
+
+    bool compile();
 
 protected:
     Shader(int type, const char *source);
@@ -16,7 +19,7 @@ class ShaderProgram {
 public:
     ShaderProgram();
 
-    Shader createShader(int type, const char *source);
+    Shader createShader(int type, const char *fileName);
 
     Shader getShader(int type);
 

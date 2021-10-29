@@ -1,7 +1,9 @@
 #include "shader.h"
 #include <glad/glad.h>
 #include <iostream>
+#include <fstream>
 #include <algorithm>
+#include "paths.h"
 
 class ShaderImpl : public Shader {
 public:
@@ -14,7 +16,7 @@ Shader::Shader(int type, const char *source) :
     glShaderSource(id, 1, &source, nullptr);
 }
 
-bool Shader::compile(unsigned int progId) {
+bool Shader::compile() {
     if (compiled) {
         std::cout << "ERROR::SHADER::ALREADY_COMPILED\n";
         return true;
@@ -38,9 +40,17 @@ bool Shader::compile(unsigned int progId) {
 ShaderProgram::ShaderProgram() :
     id(glCreateProgram()) {}
 
-Shader ShaderProgram::createShader(int type, const char *source) {
-    auto shader = ShaderImpl(type, source);
+Shader ShaderProgram::createShader(int type, const char *fileName) {
+    std::string path = "shader/";
+    path += fileName;
+
+    std::ifstream sourceFile(getResourcePath(path.c_str()));
+    std::string source((std::istreambuf_iterator<char>(sourceFile)), std::istreambuf_iterator<char>());
+
+    auto shader = ShaderImpl(type, source.c_str());
     shaders.insert({type, shader});
+
+    sourceFile.close();
     return shader;
 }
 
@@ -51,7 +61,7 @@ Shader ShaderProgram::getShader(int type) {
 bool ShaderProgram::link() {
     for (const auto &pair: shaders) {
         auto shader = pair.second;
-        if (!shader.compile(id)) {
+        if (!shader.compile()) {
             return false;
         }
 
